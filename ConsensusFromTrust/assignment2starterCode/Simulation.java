@@ -30,12 +30,11 @@ public class Simulation {
          if(Math.random() < p_malicious)
             // When you are ready to try testing with malicious nodes, replace the
             // instantiation below with an instantiation of a MaliciousNode
-            nodes[i] = new MalDoNothing(p_graph, p_malicious, p_txDistribution, numRounds);
+            nodes[i] = new MaliciousNode(p_graph, p_malicious, p_txDistribution, numRounds);
          else
             nodes[i] = new CompliantNode(p_graph, p_malicious, p_txDistribution, numRounds);
       }
-
-
+      
       // initialize random follow graph
       boolean[][] followees = new boolean[numNodes][numNodes]; // followees[i][j] is true iff i follows j
       for (int i = 0; i < numNodes; i++) {
@@ -92,13 +91,13 @@ public class Simulation {
                for (int j = 0; j < numNodes; j++) {
                   if(!followees[j][i]) continue; // tx only matters if j follows i
 
-                  if (!allProposals.containsKey(j)) {
+                  if (!allProposals.containsKey(j)) { // Initialize a candidate set for j if it's not in allProposals
                 	  Set<Candidate> candidates = new HashSet<>();
                 	  allProposals.put(j, candidates);
                   }
-                  
-                  Candidate candidate = new Candidate(tx, i);
-                  allProposals.get(j).add(candidate);
+            
+                  Candidate candidate = new Candidate(tx, i);     
+                  allProposals.get(j).add(candidate); // add proposals from i to j's proposal set
                }
 
             }
