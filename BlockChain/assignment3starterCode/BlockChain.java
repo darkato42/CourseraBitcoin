@@ -1,8 +1,18 @@
+import java.util.HashMap;
+import java.util.ArrayList;
+
 // Block Chain should maintain only limited block nodes to satisfy the functions
 // You should not have all the blocks added to the block chain in memory 
 // as it would cause a memory overflow.
 
 public class BlockChain {
+    private HashMap<ByteArrayWrapper, Block> H;
+    private HashMap<ByteArrayWrapper, UTXOPool> hmapUtxoPool;
+    private TransactionPool txPool;
+    private ByteArrayWrapper maxHeightBlockHash;
+    private int maxHeight;
+    private HashMap<ByteArrayWrapper, Integer> hmapHeight; 
+
     public static final int CUT_OFF_AGE = 10;
 
     /**
@@ -10,22 +20,42 @@ public class BlockChain {
      * block
      */
     public BlockChain(Block genesisBlock) {
-        // IMPLEMENT THIS
+        // Add the Genesis Block to HashMap.
+        H = new HashMap<ByteArrayWrapper, Block>();
+        ByteArrayWrapper hash = new ByteArrayWrapper(genesisBlock.getHash());
+        H.put(hash, genesisBlock);
+
+        // Initialise Transaction Pool
+        txPool = new TransactionPool();
+        // Initialise UTXO Pool
+        UTXOPool utxoPool = new UTXOPool();
+        Transaction coinbase = genesisBlock.getCoinbase();
+        utxoPool.addUTXO(new UTXO(coinbase.getHash(), 0), coinbase.getOutput(0));
+        hmapUtxoPool = new HashMap<ByteArrayWrapper, UTXOPool>();
+        hmapUtxoPool.put(hash, utxoPool);
+        // Initialise max height
+        hmapHeight = new HashMap<ByteArrayWrapper, Integer>();
+        maxHeightBlockHash = hash;
+        maxHeight = 1;
+        hmapHeight.put(hash, 1);
     }
 
     /** Get the maximum height block */
     public Block getMaxHeightBlock() {
         // IMPLEMENT THIS
+        return H.get(maxHeightBlockHash);
     }
 
     /** Get the UTXOPool for mining a new block on top of max height block */
     public UTXOPool getMaxHeightUTXOPool() {
         // IMPLEMENT THIS
+        return hmapUtxoPool.get(maxHeightBlockHash);
     }
 
     /** Get the transaction pool to mine a new block */
     public TransactionPool getTransactionPool() {
         // IMPLEMENT THIS
+        return txPool;
     }
 
     /**
@@ -42,10 +72,55 @@ public class BlockChain {
      */
     public boolean addBlock(Block block) {
         // IMPLEMENT THIS
+        if (block.getPrevBlockHash() == null){
+            return false;
+        }
+
+        // Check TXs. Return false when invalid TX found
+        ByteArrayWrapper prevBlockHash = new ByteArrayWrapper(block.getPrevBlockHash());
+        UTXOPool prevUtxoPool = hmapUtxoPool.get(prevBlockHash);
+        TxHandler txHandler = new TxHandler(prevUtxoPool);
+        ArrayList<Transaction> txs = block.getTransactions();
+        Transaction[] txsArray = txs.toArray(new Transaction[txs.size()]);
+        Transaction[] validTxsArray = txHandler.handleTxs(txsArray);
+        if (validTxsArray.length != txsArray.length)
+            return false;
+
+        // Handle coinbase tx
+        UTXOPool newUtxoPool = txHandler.getUTXOPool();
+        Transaction coinbase = block.getCoinbase();
+        newUtxoPool.addUTXO(new UTXO(coinbase.getHash(), 0), coinbase.getOutput(0));
+
+        int blockHeight = hmapHeight.get(prevBlockHash) + 1;
+
+        // ByteArrayWrapper hash = new ByteArrayWrapper(block.getHash());
+        // H.put(hash, block);
+        // hmapUtxoPool.put(hash, newUtxoPool);
+        // hmapHeight.put(hash, blockHeight);
+        // if (blockHeight > this.maxHeight) {
+        //     maxHeight = blockHeight;
+        //     maxHeightBlockHash = hash;
+        // }
+        // return true;
+        if(blockHeight > (this.maxHeight - CUT_OFF_AGE)) {
+            ByteArrayWrapper hash = new ByteArrayWrapper(block.getHash());
+            H.put(hash, block);
+            hmapUtxoPool.put(hash, newUtxoPool);
+            hmapHeight.put(hash, blockHeight);
+            if (blockHeight > this.maxHeight) {
+                maxHeight = blockHeight;
+                maxHeightBlockHash = hash;
+            }
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     /** Add a transaction to the transaction pool */
     public void addTransaction(Transaction tx) {
         // IMPLEMENT THIS
+        txPool.addTransaction(tx);
     }
 }
