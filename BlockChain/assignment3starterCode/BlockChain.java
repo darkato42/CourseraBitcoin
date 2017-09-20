@@ -1,5 +1,6 @@
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 // Block Chain should maintain only limited block nodes to satisfy the functions
 // You should not have all the blocks added to the block chain in memory 
@@ -79,6 +80,9 @@ public class BlockChain {
         // Check TXs. Return false when invalid TX found
         ByteArrayWrapper prevBlockHash = new ByteArrayWrapper(block.getPrevBlockHash());
         UTXOPool prevUtxoPool = hmapUtxoPool.get(prevBlockHash);
+        if (prevUtxoPool == null){  // This failed me for so long! Test 6: Process a block with an invalid prevBlockHash
+            return false;
+        }
         TxHandler txHandler = new TxHandler(prevUtxoPool);
         ArrayList<Transaction> txs = block.getTransactions();
         Transaction[] txsArray = txs.toArray(new Transaction[txs.size()]);
