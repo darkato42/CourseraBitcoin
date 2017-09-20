@@ -43,19 +43,16 @@ public class BlockChain {
 
     /** Get the maximum height block */
     public Block getMaxHeightBlock() {
-        // IMPLEMENT THIS
         return H.get(maxHeightBlockHash);
     }
 
     /** Get the UTXOPool for mining a new block on top of max height block */
     public UTXOPool getMaxHeightUTXOPool() {
-        // IMPLEMENT THIS
         return hmapUtxoPool.get(maxHeightBlockHash);
     }
 
     /** Get the transaction pool to mine a new block */
     public TransactionPool getTransactionPool() {
-        // IMPLEMENT THIS
         return txPool;
     }
 
@@ -72,7 +69,6 @@ public class BlockChain {
      * @return true if block is successfully added
      */
     public boolean addBlock(Block block) {
-        // IMPLEMENT THIS
         if (block.getPrevBlockHash() == null){
             return false;
         }
@@ -97,15 +93,6 @@ public class BlockChain {
 
         int blockHeight = hmapHeight.get(prevBlockHash) + 1;
 
-        // ByteArrayWrapper hash = new ByteArrayWrapper(block.getHash());
-        // H.put(hash, block);
-        // hmapUtxoPool.put(hash, newUtxoPool);
-        // hmapHeight.put(hash, blockHeight);
-        // if (blockHeight > this.maxHeight) {
-        //     maxHeight = blockHeight;
-        //     maxHeightBlockHash = hash;
-        // }
-        // return true;
         if(blockHeight > (this.maxHeight - CUT_OFF_AGE)) {
             ByteArrayWrapper hash = new ByteArrayWrapper(block.getHash());
             H.put(hash, block);
